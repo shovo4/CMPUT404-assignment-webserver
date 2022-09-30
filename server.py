@@ -1,4 +1,6 @@
  #  coding: utf-8 
+from code import interact
+from ctypes import c_ssize_t
 from dataclasses import dataclass
 import socketserver
 
@@ -46,12 +48,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
       
     
     def get(self, data):
+        index = "index.html"
+        css = "text/css"
         #if paths that end in /
         if data.split(" ")[1][-1]=="/":
-            self.send(self.data.split(" ")[1]+"index.html")
+            self.send(self.data.split(" ")[1]+ index)
         #if paths end with .css
         elif self.data.split(" ")[1][-4:]==".css":
-            self.send(self.data.split(" ")[1], "text/css")
+            self.send(self.data.split(" ")[1], css)
         #if paths end with .html
         elif self.data.split(" ")[1][-5:]==".html":
             self.send(self.data.split(" ")[1])
