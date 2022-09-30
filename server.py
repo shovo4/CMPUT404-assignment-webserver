@@ -1,4 +1,5 @@
-#  coding: utf-8 
+ #  coding: utf-8 
+from dataclasses import dataclass
 import socketserver
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
@@ -31,9 +32,59 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        self.data = self.data.decode("utf-8")
+        illegal = "HTTP/1.1 405 Method Not Allowed\r\n"
 
+        if self.data[0:3] == 'GET':
+            self.get(self.data)
+                     
+            self.request.sendall(bytearray("OK",'utf-8'))
+            
+        else:
+            self.request.send(bytearray(illegal, 'utf-8'))
+    
+      
+    
+    def get(self, data):
+        #if paths that end in /
+        if data.split(" ")[1][-1]=="/":
+            self.send(self.data.split(" ")[1]+"index.html")
+        #if paths end with .css
+        elif self.data.split(" ")[1][-4:]==".css":
+            self.send(self.data.split(" ")[1], "text/css")
+        #if paths end with .html
+        elif self.data.split(" ")[1][-5:]==".html":
+            self.send(self.data.split(" ")[1])
+        #if the paths dont end in /
+        else:
+            self.correctPath(self.data.split(" ")[1])
+    
+    def send(self,url, contentType="text/html"):
+        try:
+            file = open("./www"+url)
+            data = file.read()
+            file.close()
+        except:
+            response = "HTTP/1.1 404 Not Found\r\n"
+            self.request.sendall(bytearray(response, 'utf-8'))
+            return
+        response = f'HTTP/1.1 200 OK\r\nContent-Type:  {contentType}\r\nContent-Length: {len(data)}\r\n\r\n{data}'
+        self.request.sendall(bytearray(response, 'utf-8'))
+    
+    
+    def correctPath(self,url):
+        
+        try:
+            file = open("./www"+url+"/index.html")
+            data = file.read()
+            file.close()
+        except:
+            response = 'HTTP/1.1 404 Not Found\r\n'
+            self.request.sendall(bytearray(response, 'utf-8'))
+            return
+        self.response = f'HTTP/1.1 301 Moved Permanently\r\nLocation: {url+"/"}\r\n'
+        self.request.sendall(bytearray(self.response, 'utf-8'))
+       
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
